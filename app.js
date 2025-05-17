@@ -3,7 +3,7 @@ const app = express();
 
 app.use(express.json());
 
-const homeRouter = require('./routes/home');
-app.use('/api/v2', homeRouter);
+const authRouter = require('./routes/auth');
+app.use('/api/v2', authRouter)
 
 module.exports = app;
