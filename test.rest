@@ -5,13 +5,13 @@ POST http://localhost:4000/api/v2/auth/register
 Content-Type: application/json
 
 {
-    "email": "ex@gmail.com",
-    "password": "ex123",
-    "confirmPassword": "ex123"
+    "email": "bf@gmail.com",
+    "password": "bf123",
+    "confirmPassword": "bf123"
 }
 
 ###
-GET http://localhost:4000/api/v2/auth/verify/d158bd37bb1d1fbd3ddc8cc604137051527a81527e6ad0f09759d5f4e73ff475
+GET http://localhost:4000/api/v2/auth/verify/aab5a34b91b677ec9b3e610006efde5b34d393406affe95c2651afd872eb8fba
 
 ###
 //User Login
@@ -20,11 +20,35 @@ POST http://localhost:4000/api/v2/auth/login
 Content-Type: application/json
 
 {
-    "email": "www@gmail.com",
-    "password": "www123"
+    "email": "bf@gmail.com",
+    "password": "bf123"
 }
 
 ###
 //user profile
 
 GET http://localhost:4000/api/v2/profile
+
+
+###
+//post a summary
+
+POST http://localhost:4000/api/v2/summary/save
+Content-Type: application/json
+
+{
+  "title": "cloud fall",
+  "text": "Short original text from user...",
+  "summary": "Only the version from Anthropic API..."
+}
+
+###
+//get summary text
+
+GET http://localhost:4000/api/v2/summary/10
+
+
+###
+//get quote balance
+
+GET http://localhost:4000/api/v2/balance
