@@ -6,7 +6,7 @@ const sendToken = (user, statusCode, res) => {
         expiresIn: process.env.EXPIRES_TIME || '7d'
     });
 
-    const expiresInDays = parseInt(process.env.EXPIRES_TIME, 10);
+    const expiresInDays = parseInt(process.env.EXPIRES_TIME, 10) || 7;
     const expiresDate = new Date(Date.now() + expiresInDays * 24 * 60 * 60 * 1000);
 
     const options = {
@@ -18,7 +18,6 @@ const sendToken = (user, statusCode, res) => {
 
     res.status(statusCode).cookie('token', token, options).json({
         success: true,
-        message: 'User Registered successful',
         token,
         user: {
             id: user.id,

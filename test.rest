@@ -1,12 +1,30 @@
 ###
+//Register User
 
-GET http://localhost:4000/api/v2/home
-
-###
 POST http://localhost:4000/api/v2/auth/register
 Content-Type: application/json
 
 {
-    "email": "femi@gmail.com",
-    "password": "Femi123"
+    "email": "ex@gmail.com",
+    "password": "ex123",
+    "confirmPassword": "ex123"
 }
+
+###
+GET http://localhost:4000/api/v2/auth/verify/d158bd37bb1d1fbd3ddc8cc604137051527a81527e6ad0f09759d5f4e73ff475
+
+###
+//User Login
+
+POST http://localhost:4000/api/v2/auth/login
+Content-Type: application/json
+
+{
+    "email": "www@gmail.com",
+    "password": "www123"
+}
+
+###
+//user profile
+
+GET http://localhost:4000/api/v2/profile
