@@ -30,7 +30,7 @@ router.post(
       if (existingUser.is_verified) {
         return next(new ErrorHandler("User email already registered", 400));
       } else {
-        // Avoid sending multiple verification emails
+		
         if (existingUser.email_verify_expire && existingUser.email_verify_expire > new Date()) {
           return res.status(429).json({
             success: false,
@@ -48,13 +48,30 @@ router.post(
         );
 
         const verifyUrl = `${req.protocol}://${req.get("host")}/api/v2/auth/verify/${rawToken}`;
-        const message = `Hi! Please click the link below to verify your email:\n\n${verifyUrl}\n\nIf you didn't request this, please ignore.`;
+		const message = `Hi! Please verify your email by clicking the link: ${verifyUrl}`;
 
-        await sendEmail({
-          email,
-          subject: "Verify your email for AI Paper",
-          message,
-        });
+		const html = `
+		<div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #eaeaea; border-radius: 10px;">
+			<h2 style="color: #333; text-align: center;">Welcome to AI Paper 🎓</h2>
+			<img src="https://images.unsplash.com/photo-1663124178703-d2d6a333e6c2?q=80&w=2060&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="AI Paper Banner" style="width: 600px; height= 400px; border-radius: 8px; margin-bottom: 20px;" />
+			<p style="font-size: 16px; color: #333;">Hello Paper,</p>
+			<p style="font-size: 16px; color: #333;">Thanks for signing up. Please verify your email address to complete your registration.</p>
+			<div style="text-align: center; margin: 30px 0;">
+			<a href="${verifyUrl}" style="background-color: #007bff; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold;">
+				Verify Email
+			</a>
+			</div>
+			<p style="font-size: 14px; color: #666;">If you did not sign up for AI Paper, you can safely ignore this email.</p>
+			<p style="font-size: 12px; color: #aaa; text-align: center;">This link will expire in 10 minutes.</p>
+		</div>
+		`;
+
+		await sendEmail({
+			email,
+			subject: "Verify your email for AI Paper",
+			message,
+			html,
+		});
 
         return res.status(200).json({
           success: true,
@@ -199,17 +216,36 @@ router.post(
 );
 
 router.get(
-	"/profile",
-	isAuthenticatedUser,
-	catchAsyncErrors(async (req, res, next) => {
-		res.status(200).json({
-			success: true,
-			user: {
-				id: req.user.id,
-				email: req.user.email,
-			},
-		});
-	}),
+  "/profile",
+  isAuthenticatedUser,
+  catchAsyncErrors(async (req, res, next) => {
+    const userId = req.user.id;
+
+    const result = await pool.query(
+      `SELECT u.id, u.email, u.is_verified, c.balance
+       FROM users u
+       LEFT JOIN user_credits c ON u.id = c.user_id
+       WHERE u.id = $1`,
+      [userId]
+    );
+
+    const user = result.rows[0];
+
+    if (!user) {
+      return next(new ErrorHandler("User not found", 404));
+    }
+
+    res.status(200).json({
+      success: true,
+      user: {
+        id: user.id,
+        email: user.email,
+        is_verified: user.is_verified,
+        balance: user.balance || 0,
+      },
+    });
+  })
 );
+
 
 module.exports = router;
