@@ -64,11 +64,25 @@ const UserCreditTable = async () => {
 	}
 }
 
+const AlterBalance = async () => {
+	try {
+		await pool.query(`
+			ALTER TABLE user_credits
+			ALTER COLUMN balance SET DEFAULT 10;
+		`);
+		console.log("Default credit balance updated to 10");
+	} catch (err) {
+		console.error("Error updating default credit balance:", err);
+	}
+};
+
+
 const main = async () => {
 	await createUsersTable();
 	await alterUsersTable();
 	await UserSummaryText();
-	await UserCreditTable()
+	await UserCreditTable();
+	await AlterBalance()
 	await pool.end();
 };
 
