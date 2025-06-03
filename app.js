@@ -2,10 +2,11 @@ const express = require('express');
 const app = express();
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
+const ErrorHandler = require('./utils/errorHandler')
 
 
 const allowedOrigins = [
-  'http://localhost:3000',
+  'http://localhost:5173',
   'https://your-live-domain.com'
 ];
 
@@ -16,7 +17,7 @@ app.use(cors({
     if (allowedOrigins.includes(origin)) {
       return callback(null, true);
     } else {
-      return callback(new Error('Not allowed by CORS'));
+      return next(new ErrorHandler('Not allowed by CORS', 404));
     }
   },
   credentials: true,

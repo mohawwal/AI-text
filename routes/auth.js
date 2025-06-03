@@ -13,41 +13,41 @@ const crypto = require("crypto");
 router.post(
   "/auth/register",
   catchAsyncErrors(async (req, res, next) => {
-    const { email, password, confirmPassword } = req.body;
+	const { email, password, confirmPassword } = req.body;
 
-    if (!email || !password || !confirmPassword) {
-      return next(new ErrorHandler("Email, Password and Confirm Password are required", 400));
-    }
+	if (!email || !password || !confirmPassword) {
+	  return next(new ErrorHandler("Email, Password and Confirm Password are required", 400));
+	}
 
-    if (password !== confirmPassword) {
-      return next(new ErrorHandler("Passwords do not match", 400));
-    }
+	if (password !== confirmPassword) {
+	  return next(new ErrorHandler("Passwords do not match", 400));
+	}
 
-    const userRes = await pool.query("SELECT * FROM users WHERE email = $1", [email]);
-    const existingUser = userRes.rows[0];
+	const userRes = await pool.query("SELECT * FROM users WHERE email = $1", [email]);
+	const existingUser = userRes.rows[0];
 
-    if (existingUser) {
-      if (existingUser.is_verified) {
-        return next(new ErrorHandler("User email already registered", 400));
-      } else {
+	if (existingUser) {
+	  if (existingUser.is_verified) {
+		return next(new ErrorHandler("User email already registered", 400));
+	  } else {
 		
-        if (existingUser.email_verify_expire && existingUser.email_verify_expire > new Date()) {
-          return res.status(429).json({
-            success: false,
-            message: "Verification email already sent. Please wait before requesting a new one.",
-          });
-        }
+		if (existingUser.email_verify_expire && existingUser.email_verify_expire > new Date()) {
+		  return res.status(429).json({
+			success: false,
+			message: "Verification email already sent. Please wait before requesting a new one.",
+		  });
+		}
 
-        const rawToken = crypto.randomBytes(32).toString("hex");
-        const hashedToken = crypto.createHash("sha256").update(rawToken).digest("hex");
-        const tokenExpire = new Date(Date.now() + 10 * 60 * 1000);
+		const rawToken = crypto.randomBytes(32).toString("hex");
+		const hashedToken = crypto.createHash("sha256").update(rawToken).digest("hex");
+		const tokenExpire = new Date(Date.now() + 10 * 60 * 1000);
 
-        await pool.query(
-          "UPDATE users SET email_verify_token = $1, email_verify_expire = $2 WHERE id = $3",
-          [hashedToken, tokenExpire, existingUser.id]
-        );
+		await pool.query(
+		  "UPDATE users SET email_verify_token = $1, email_verify_expire = $2 WHERE id = $3",
+		  [hashedToken, tokenExpire, existingUser.id]
+		);
 
-        const verifyUrl = `${req.protocol}://${req.get("host")}/api/v2/auth/verify/${rawToken}`;
+		const verifyUrl = `${req.protocol}://${req.get("host")}/api/v2/auth/verify/${rawToken}`;
 		const message = `Hi! Please verify your email by clicking the link: ${verifyUrl}`;
 
 		const html = `
@@ -73,45 +73,45 @@ router.post(
 			html,
 		});
 
-        return res.status(200).json({
-          success: true,
-          message: "Verification email has been resent.",
-        });
-      }
-    }
+		return res.status(200).json({
+		  success: true,
+		  message: "Verification email has been resent.",
+		});
+	  }
+	}
 
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const rawToken = crypto.randomBytes(32).toString("hex");
-    const hashedToken = crypto.createHash("sha256").update(rawToken).digest("hex");
-    const tokenExpire = new Date(Date.now() + 10 * 60 * 1000);
+	const hashedPassword = await bcrypt.hash(password, 10);
+	const rawToken = crypto.randomBytes(32).toString("hex");
+	const hashedToken = crypto.createHash("sha256").update(rawToken).digest("hex");
+	const tokenExpire = new Date(Date.now() + 10 * 60 * 1000);
 
-    const insertUser = await pool.query(
-      `INSERT INTO users (email, password, email_verify_token, email_verify_expire)
-       VALUES ($1, $2, $3, $4)
-       RETURNING id`,
-      [email, hashedPassword, hashedToken, tokenExpire]
-    );
+	const insertUser = await pool.query(
+	  `INSERT INTO users (email, password, email_verify_token, email_verify_expire)
+	   VALUES ($1, $2, $3, $4)
+	   RETURNING id`,
+	  [email, hashedPassword, hashedToken, tokenExpire]
+	);
 
-    const userId = insertUser.rows[0].id;
+	const userId = insertUser.rows[0].id;
 
-    await pool.query(
-      "INSERT INTO user_credits (user_id, balance) VALUES ($1, 100)",
-      [userId]
-    );
+	await pool.query(
+	  "INSERT INTO user_credits (user_id, balance) VALUES ($1, 100)",
+	  [userId]
+	);
 
-    const verifyUrl = `${req.protocol}://${req.get("host")}/api/v2/auth/verify/${rawToken}`;
-    const message = `Hi! Please click the link below to verify your email:\n\n${verifyUrl}\n\nIf you didn't request this, please ignore.`;
+	const verifyUrl = `${req.protocol}://${req.get("host")}/api/v2/auth/verify/${rawToken}`;
+	const message = `Hi! Please click the link below to verify your email:\n\n${verifyUrl}\n\nIf you didn't request this, please ignore.`;
 
-    await sendEmail({
-      email,
-      subject: "Verify your email for Zarmario",
-      message,
-    });
+	await sendEmail({
+	  email,
+	  subject: "Verify your email for Kivu",
+	  message,
+	});
 
-    res.status(200).json({
-      success: true,
-      message: "Verification email sent to " + email,
-    });
+	res.status(200).json({
+	  success: true,
+	  message: "Verification email sent to " + email,
+	});
   })
 );
 
@@ -199,7 +199,7 @@ router.post(
 
 			await sendEmail({
 				email: user.email,
-				subject: "Verify your email for Zarmario",
+				subject: "Verify your email for Kivu",
 				message,
 			});
 
@@ -213,38 +213,6 @@ router.post(
 
 		sendToken(user, 200, res);
 	}),
-);
-
-router.get(
-  "/profile",
-  isAuthenticatedUser,
-  catchAsyncErrors(async (req, res, next) => {
-    const userId = req.user.id;
-
-    const result = await pool.query(
-      `SELECT u.id, u.email, u.is_verified, c.balance
-       FROM users u
-       LEFT JOIN user_credits c ON u.id = c.user_id
-       WHERE u.id = $1`,
-      [userId]
-    );
-
-    const user = result.rows[0];
-
-    if (!user) {
-      return next(new ErrorHandler("User not found", 404));
-    }
-
-    res.status(200).json({
-      success: true,
-      user: {
-        id: user.id,
-        email: user.email,
-        is_verified: user.is_verified,
-        balance: user.balance || 0,
-      },
-    });
-  })
 );
 
 
